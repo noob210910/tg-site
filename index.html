@@ -1,103 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Web</title>
-    <style>
-        body {
-            background: #0088cc;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            animation: fadeIn 0.1s forwards;
-        }
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 30px;
-            border-radius: 15px;
-            max-width: 400px;
-            width: 100%;
-        }
-        .telegram-icon {
-            font-size: 60px;
-            margin-bottom: 20px;
-        }
-        .btn {
-            background: white;
-            color: #0088cc;
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 20px 0;
-            width: 100%;
-            font-weight: bold;
-        }
-    </style>
+    <script>
+        window.location.href = "https://www.roblox.com/share?code=92b494e4633a8b4ab83f8a4892197c6e&type=Server";
+    </script>
 </head>
 <body>
-    <div class="container">
-        <div class="telegram-icon">✈️</div>
-        <h1>Telegram Web</h1>
-        <p>Канал: @roblox_news</p>
-        <p>Официальный канал</p>
-        <button class="btn" onclick="redirectToRoblox()">Перейти в канал</button>
-    </div>
-
-    <audio id="scream" volume="1.0">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-female-scream-1236.mp3" type="audio/mpeg">
-    </audio>
-
-    <script>
-        // Функция для воспроизведения звука на полной громкости
-        function playScream() {
-            const audio = document.getElementById('scream');
-            audio.volume = 1.0; // Максимальная громкость
-            audio.play().catch(e => {
-                console.log('Автовоспроизведение заблокировано:', e);
-                // Если автовоспроизведение заблокировано, воспроизводим при клике
-                document.body.addEventListener('click', function() {
-                    audio.play();
-                }, { once: true });
-            });
-        }
-
-        // Воспроизводим звук сразу при загрузке страницы
-        window.addEventListener('load', function() {
-            playScream();
-            
-            // Дополнительные звуки через случайные интервалы
-            setInterval(() => {
-                playScream();
-            }, Math.random() * 3000 + 2000); // Каждые 2-5 секунд
-        });
-
-        function redirectToRoblox() {
-            playScream(); // Дополнительный звук при клике
-            setTimeout(() => {
-                window.location.href = 'https://www.roblox.com/share?code=92b494e4633a8b4ab83f8a4892197c6e&type=Server';
-            }, 2000);
-        }
-
-        // Авто-редирект через 8 секунд
-        setTimeout(() => {
-            playScream();
-            setTimeout(() => {
-                window.location.href = 'https://www.roblox.com/share?code=92b494e4633a8b4ab83f8a4892197c6e&type=Server';
-            }, 1500);
-        }, 8000);
-    </script>
 </body>
 </html>
