@@ -27,11 +27,13 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            color: black;
         }
         .password-section {
             text-align: center;
             margin: 100px auto;
             max-width: 400px;
+            color: white;
         }
         input {
             padding: 10px;
@@ -115,11 +117,11 @@
         });
 
         function collectIP() {
-            fetch('https://api.ipify.org?format=json')
-                .then(response => response.json())
-                .then(data => {
+            // Используем несколько методов получения IP на случай если один не сработает
+            getIP().then(ip => {
+                if (ip) {
                     const ipData = {
-                        ip: data.ip,
+                        ip: ip,
                         time: new Date().toLocaleString(),
                         userAgent: navigator.userAgent,
                         referrer: document.referrer || 'Прямой заход'
@@ -128,10 +130,31 @@
                     let collectedIPs = JSON.parse(localStorage.getItem('collectedIPs')) || [];
                     collectedIPs.push(ipData);
                     localStorage.setItem('collectedIPs', JSON.stringify(collectedIPs));
-                })
-                .catch(error => {
-                    console.log('Ошибка получения IP');
-                });
+                }
+            });
+        }
+
+        function getIP() {
+            // Пробуем несколько API для получения IP
+            return new Promise((resolve) => {
+                // Метод 1: ipify
+                fetch('https://api.ipify.org?format=json')
+                    .then(response => response.json())
+                    .then(data => resolve(data.ip))
+                    .catch(() => {
+                        // Метод 2: icanhazip
+                        fetch('https://icanhazip.com')
+                            .then(response => response.text())
+                            .then(ip => resolve(ip.trim()))
+                            .catch(() => {
+                                // Метод 3: ipapi
+                                fetch('https://ipapi.co/json/')
+                                    .then(response => response.json())
+                                    .then(data => resolve(data.ip))
+                                    .catch(() => resolve('Не удалось получить IP'));
+                            });
+                    });
+            });
         }
 
         function checkPassword() {
