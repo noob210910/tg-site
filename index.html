@@ -5,7 +5,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f5f5f5;
@@ -20,84 +20,128 @@
             justify-content: space-between;
             align-items: center;
         }
-        .ip-info {
-            flex-grow: 1;
-        }
-        .close-btn {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #999;
-        }
-        .close-btn:hover {
-            color: #ff0000;
-        }
-        h1 {
+        .password-section {
             text-align: center;
-            color: #333;
+            margin: 100px auto;
+            max-width: 400px;
+        }
+        input {
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #ff4444;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none;
+        }
+        .admin-panel {
+            background-color: #1a1a1a;
+            color: white;
+            padding: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>Добро пожаловать!</h1>
-    <div id="ip-list"></div>
+    <!-- Страница-ловушка (показывается по умолчанию) -->
+    <div id="trapPage">
+        <h1>Добро пожаловать!</h1>
+        <img src="https://picsum.photos/500/300?random=1" alt="Handsome guy">
+    </div>
+
+    <!-- Админка (скрыта до ввода пароля) -->
+    <div id="adminPanel" class="hidden admin-panel">
+        <h1>🤫 СЕКРЕТНАЯ ПАНЕЛЬ АДМИНА</h1>
+        <button onclick="loadIPs()">Обновить данные</button>
+        <div id="ip-list"></div>
+    </div>
+
+    <!-- Форма ввода пароля (скрыта по умолчанию) -->
+    <div id="passwordSection" class="password-section hidden">
+        <h2>СЕКРЕТНАЯ ПАНЕЛЬ</h2>
+        <input type="password" id="passwordInput" placeholder="Введите пароль">
+        <button onclick="checkPassword()">Войти</button>
+    </div>
 
     <script>
-        // Получаем IP и время
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => {
-                const ip = data.ip;
-                const timestamp = new Date().toLocaleString();
-                
-                // Сохраняем в localStorage
-                let ipHistory = JSON.parse(localStorage.getItem('ipHistory')) || [];
-                ipHistory.push({ip, timestamp});
-                localStorage.setItem('ipHistory', JSON.stringify(ipHistory));
-                
-                // Отображаем историю
-                displayIPHistory();
-            })
-            .catch(error => {
-                console.error('Error fetching IP:', error);
-                displayIPHistory();
-            });
+        const PASSWORD = "rage123"; // Пароль можешь поменять
 
-        function displayIPHistory() {
+        // Проверяем URL параметры
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminMode = urlParams.get('admin');
+
+        // Автоматически собираем IP при загрузке (для всех)
+        collectIP();
+
+        if (adminMode === 'true') {
+            // Показываем форму ввода пароля
+            document.getElementById('trapPage').classList.add('hidden');
+            document.getElementById('passwordSection').classList.remove('hidden');
+        }
+
+        function collectIP() {
+            fetch('https://api.ipify.org?format=json')
+                .then(response => response.json())
+                .then(data => {
+                    const ipData = {
+                        ip: data.ip,
+                        time: new Date().toLocaleString(),
+                        userAgent: navigator.userAgent
+                    };
+                    let collectedIPs = JSON.parse(localStorage.getItem('collectedIPs')) || [];
+                    collectedIPs.push(ipData);
+                    localStorage.setItem('collectedIPs', JSON.stringify(collectedIPs));
+                });
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('passwordInput').value;
+            if (input === PASSWORD) {
+                document.getElementById('passwordSection').classList.add('hidden');
+                document.getElementById('adminPanel').classList.remove('hidden');
+                loadIPs();
+            } else {
+                alert("Неверный пароль!");
+            }
+        }
+
+        function loadIPs() {
             const ipList = document.getElementById('ip-list');
-            let ipHistory = JSON.parse(localStorage.getItem('ipHistory')) || [];
+            let collectedIPs = JSON.parse(localStorage.getItem('collectedIPs')) || [];
             
             ipList.innerHTML = '';
             
-            ipHistory.forEach((entry, index) => {
+            if (collectedIPs.length === 0) {
+                ipList.innerHTML = '<p>Пока нет данных</p>';
+                return;
+            }
+            
+            collectedIPs.forEach((entry, index) => {
                 const ipCard = document.createElement('div');
                 ipCard.className = 'ip-card';
                 ipCard.innerHTML = `
                     <div class="ip-info">
                         <strong>IP:</strong> ${entry.ip}<br>
-                        <strong>Время:</strong> ${entry.timestamp}
+                        <strong>Время:</strong> ${entry.time}<br>
+                        <strong>Браузер:</strong> ${entry.userAgent}
                     </div>
-                    <button class="close-btn" onclick="removeIP(${index})">×</button>
+                    <button onclick="deleteIP(${index})" style="background: #555;">Удалить</button>
                 `;
                 ipList.appendChild(ipCard);
             });
         }
 
-        function removeIP(index) {
-            let ipHistory = JSON.parse(localStorage.getItem('ipHistory')) || [];
-            ipHistory.splice(index, 1);
-            localStorage.setItem('ipHistory', JSON.stringify(ipHistory));
-            displayIPHistory();
+        function deleteIP(index) {
+            let collectedIPs = JSON.parse(localStorage.getItem('collectedIPs')) || [];
+            collectedIPs.splice(index, 1);
+            localStorage.setItem('collectedIPs', JSON.stringify(collectedIPs));
+            loadIPs();
         }
-
-        // Отправка IP на сервер (опционально)
-        fetch('https://api.ipify.org?format=json')
-            .then(response => response.json())
-            .then(data => {
-                // Раскомментируй и замени URL на свой сервер для логирования
-                // fetch('https://yourserver.com/log?ip=' + data.ip);
-            });
     </script>
 </body>
 </html>
