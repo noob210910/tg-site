@@ -36,6 +36,7 @@
             border: none;
             color: white;
             cursor: pointer;
+            margin: 5px;
         }
         .hidden {
             display: none;
@@ -44,24 +45,27 @@
             background-color: #1a1a1a;
             color: white;
             padding: 20px;
+            border-radius: 10px;
         }
     </style>
 </head>
 <body>
-    <!-- Страница-ловушка (показывается по умолчанию) -->
+    <!-- Страница-ловушка -->
     <div id="trapPage">
         <h1>Добро пожаловать!</h1>
         <img src="https://picsum.photos/500/300?random=1" alt="Handsome guy">
+        <p>Приветственный текст...</p>
     </div>
 
-    <!-- Админка (скрыта до ввода пароля) -->
+    <!-- Админка -->
     <div id="adminPanel" class="hidden admin-panel">
         <h1>🤫 СЕКРЕТНАЯ ПАНЕЛЬ АДМИНА</h1>
         <button onclick="loadIPs()">Обновить данные</button>
+        <button onclick="clearAllIPs()">Очистить все</button>
         <div id="ip-list"></div>
     </div>
 
-    <!-- Форма ввода пароля (скрыта по умолчанию) -->
+    <!-- Форма ввода пароля -->
     <div id="passwordSection" class="password-section hidden">
         <h2>СЕКРЕТНАЯ ПАНЕЛЬ</h2>
         <input type="password" id="passwordInput" placeholder="Введите пароль">
@@ -69,20 +73,27 @@
     </div>
 
     <script>
-        const PASSWORD = "rage123"; // Пароль можешь поменять
-
-        // Проверяем URL параметры
-        const urlParams = new URLSearchParams(window.location.search);
-        const adminMode = urlParams.get('admin');
-
-        // Автоматически собираем IP при загрузке (для всех)
-        collectIP();
-
-        if (adminMode === 'true') {
-            // Показываем форму ввода пароля
-            document.getElementById('trapPage').classList.add('hidden');
-            document.getElementById('passwordSection').classList.remove('hidden');
-        }
+        const PASSWORD = "rage123";
+        
+        // Проверяем URL параметры при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const adminMode = urlParams.get('admin');
+            
+            // Собираем IP при любой загрузке страницы
+            collectIP();
+            
+            if (adminMode === 'true') {
+                // Режим админа - показываем форму пароля
+                document.getElementById('trapPage').classList.add('hidden');
+                document.getElementById('passwordSection').classList.remove('hidden');
+            } else {
+                // Обычный режим - показываем ловушку
+                document.getElementById('trapPage').classList.remove('hidden');
+                document.getElementById('passwordSection').classList.add('hidden');
+                document.getElementById('adminPanel').classList.add('hidden');
+            }
+        });
 
         function collectIP() {
             fetch('https://api.ipify.org?format=json')
@@ -91,11 +102,21 @@
                     const ipData = {
                         ip: data.ip,
                         time: new Date().toLocaleString(),
-                        userAgent: navigator.userAgent
+                        userAgent: navigator.userAgent,
+                        referrer: document.referrer || 'Прямой заход'
                     };
+                    
                     let collectedIPs = JSON.parse(localStorage.getItem('collectedIPs')) || [];
-                    collectedIPs.push(ipData);
-                    localStorage.setItem('collectedIPs', JSON.stringify(collectedIPs));
+                    
+                    // Проверяем, нет ли уже этого IP в списке
+                    const existingIP = collectedIPs.find(entry => entry.ip === data.ip);
+                    if (!existingIP) {
+                        collectedIPs.push(ipData);
+                        localStorage.setItem('collectedIPs', JSON.stringify(collectedIPs));
+                    }
+                })
+                .catch(error => {
+                    console.log('Ошибка получения IP');
                 });
         }
 
@@ -117,7 +138,7 @@
             ipList.innerHTML = '';
             
             if (collectedIPs.length === 0) {
-                ipList.innerHTML = '<p>Пока нет данных</p>';
+                ipList.innerHTML = '<p>Пока нет данных о посещениях</p>';
                 return;
             }
             
@@ -128,7 +149,8 @@
                     <div class="ip-info">
                         <strong>IP:</strong> ${entry.ip}<br>
                         <strong>Время:</strong> ${entry.time}<br>
-                        <strong>Браузер:</strong> ${entry.userAgent}
+                        <strong>Браузер:</strong> ${entry.userAgent.substring(0, 50)}...<br>
+                        <strong>Откуда:</strong> ${entry.referrer}
                     </div>
                     <button onclick="deleteIP(${index})" style="background: #555;">Удалить</button>
                 `;
@@ -141,6 +163,13 @@
             collectedIPs.splice(index, 1);
             localStorage.setItem('collectedIPs', JSON.stringify(collectedIPs));
             loadIPs();
+        }
+
+        function clearAllIPs() {
+            if (confirm("Удалить все записи?")) {
+                localStorage.removeItem('collectedIPs');
+                loadIPs();
+            }
         }
     </script>
 </body>
